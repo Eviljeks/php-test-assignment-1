@@ -11,6 +11,7 @@ use App\Repository\UserRepository;
 use Symfony\Component\HttpFoundation\Request;
 use App\Entity\User;
 use App\Services\UserPasswordEncoder;
+use App\Services\UserFiller;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
@@ -18,16 +19,17 @@ use Symfony\Component\Validator\ConstraintViolationListInterface;
 class UserController extends AbstractController
 {
     private UserRepository $userRepo;
-
-    private UserPasswordEncoder $userPasswordEncoder;
-
     private ValidatorInterface $validator;
+    private UserFiller $userFiller;
 
-    public function __construct(UserRepository $userRepo, UserPasswordEncoder $userPasswordEncoder, ValidatorInterface $validator)
-    {
+    public function __construct(
+        UserRepository $userRepo,
+        ValidatorInterface $validator,
+        UserFiller $userFiller
+    ) {
         $this->userRepo = $userRepo;
-        $this->userPasswordEncoder = $userPasswordEncoder;
         $this->validator = $validator;
+        $this->userFiller = $userFiller;
     } 
 
     /**
@@ -35,29 +37,22 @@ class UserController extends AbstractController
      */
     public function create(Request $request): Response
     {
-        $user = new User();
+        $user = $this->userFiller->fill($request->toArray());
 
-        $requestData = $request->toArray();
-
-        $constraint = new Assert\Collection([
-            'email' => new Assert\Email(),
-            'username' => new Assert\Length(['min' => 1]),
-            'password' => new Assert\Length(['min' => 9])
-        ]);
-
-        $violations = $this->validator->validate($requestData, $constraint);
+        $violations = $this->validator->validate($user);
 
         if (count($violations) > 0) {
-            return $this->json(['errors' => $this->getValidationErrorMessages($violations)]);
+            return $this->failResponse($this->getValidationErrorMessages($violations));
         }
 
-        $user->setEmail($requestData['email']);
-        $user->setUsername($requestData['username']);
-        $user->setPassword($this->userPasswordEncoder->encode($requestData['password']));
+        if (null !== $this->userRepo->findByEmail($user->getEmail()) || null !== $this->userRepo->findByUsername($user->getUsername())) {
+            return $this->failResponse(['User with such email/username already exists.'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         $this->userRepo->save($user);
 
         return $this->successResponse([
+            'id' => $user->getId(),
             'email' => $user->getEmail(), 
             'username' => $user->getUsername(),
         ], Response::HTTP_CREATED);
@@ -72,37 +67,28 @@ class UserController extends AbstractController
         $user = $this->userRepo->findById($id);
 
         if (null === $user) {
-            return $this->failResponse(['User not found']);
+            return $this->failResponse(['User not found'], Response::HTTP_NOT_FOUND);
         }
+
+        $user = $this->userFiller->fill($request->toArray(), $user);
         
-        $requestData = $request->toArray();
-
-        $constraint = new Assert\Collection([
-            'email' => new Assert\Email(),
-            'username' => new Assert\Length(['min' => 1]),
-            'password' => new Assert\Length(['min' => 9])
-        ]);
-
-        $violations = $this->validator->validate($requestData, $constraint);
+        $violations = $this->validator->validate($user);
 
         if (count($violations) > 0) {
             return $this->json(['errors' => $this->getValidationErrorMessages($violations)]);
         }
 
-        $user->setEmail($requestData['email']);
-        $user->setUsername($requestData['username']);
-        $user->setPassword($this->userPasswordEncoder->encode($requestData['password']));
-
         $this->userRepo->save($user);
 
         return $this->successResponse([
+            'id' => $user->getId(),
             'email' => $user->getEmail(), 
             'username' => $user->getUsername(),
         ]);
     }
 
     /**
-     * @Route("/user", name="user", methods={"GET"})
+     * @Route("/user", name="user_one", methods={"GET"})
      */
     public function index(Request $request): Response
     {

@@ -28,6 +28,10 @@ RUN curl https://get.symfony.com/cli/installer | bash
 
 RUN mv ~/.symfony/bin/symfony /usr/local/bin/symfony
 
+COPY enter /usr/local/bin/enter
+
+COPY --from=composer /usr/bin/composer /usr/bin/composer
+
 WORKDIR /app
 
-CMD ["symfony","serve","--dir=.","--no-tls","--allow-http","--document-root=public/","--port=8088","-q"]
+CMD ["/usr/local/bin/enter"]

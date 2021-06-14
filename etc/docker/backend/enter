@@ -1,0 +1,9 @@
+# bin/bash
+
+cp .env.dist .env
+
+composer install || true
+
+./bin/console doctrine:mig:mig
+
+symfony serve --dir=. --no-tls --allow-http --document-root=public/ --port=8088 -q

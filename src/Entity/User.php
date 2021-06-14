@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
@@ -16,23 +17,34 @@ class User
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
-    private $id;
+    private int $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
+     * @Assert\Email
+     * @Assert\Length(min = 1, max = 180)
      */
-    private $email;
+    private string $email;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true, nullable=true)
+     * @Assert\Length(min = 1, max = 180)
      */
-    private $username;
+    private string $username;
 
     /**
-     * @var string The hashed password
      * @ORM\Column(type="string")
+     * @Assert\Length(min = 1, max = 255)
      */
-    private $password;
+    private string $password;
+
+    public function __construct(string $email, string $username, string $password)
+    {
+        $this->email = $email;
+        $this->username = $username;
+        $this->password = $password;
+
+    }
 
     public function getId(): ?int
     {
