@@ -4,6 +4,6 @@ cp .env.dist .env
 
 composer install || true
 
-./bin/console doctrine:mig:mig
+./bin/console doctrine:mig:mig -n
 
 symfony serve --dir=. --no-tls --allow-http --document-root=public/ --port=8088 -q
