@@ -14,7 +14,7 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
-    public function findById(string $id): ?User
+    public function findById(int $id): ?User
     {
         return $this->findOneBy(compact('id'));
     }
@@ -32,28 +32,14 @@ class UserRepository extends ServiceEntityRepository
     /**
      * @return User[]
      */
-    public function findAll()
-    {
-        return $this->createQueryBuilder('u')
-            ->select('u.id,u.email,u.username')
-            ->orderBy('u.id', 'ASC')
-            ->getQuery()
-            ->getResult(Query::HYDRATE_ARRAY)
-        ;
-    }
-
-    /**
-     * @return User[]
-     */
     public function findByEmailOrUsername(string $value): array
     {
         return $this->createQueryBuilder('u')
-            ->select('u.id,u.email,u.username')
             ->andWhere('u.email LIKE :val OR u.username LIKE :val')
             ->setParameter('val', '%'.$value.'%')
             ->orderBy('u.id', 'ASC')
             ->getQuery()
-            ->getResult(Query::HYDRATE_ARRAY)
+            ->getResult()
         ;
     }
 

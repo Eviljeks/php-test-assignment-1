@@ -18,6 +18,8 @@ services:
         exclude:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
+            - '../src/Exception/'
+            - '../src/DTO/'
             - '../src/Kernel.php'
             - '../src/Tests/'
 
