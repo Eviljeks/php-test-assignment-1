@@ -43,7 +43,6 @@ class User
         $this->email = $email;
         $this->username = $username;
         $this->password = $password;
-
     }
 
     public function getId(): ?int

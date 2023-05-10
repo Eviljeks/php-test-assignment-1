@@ -26,7 +26,7 @@ COPY php.ini /usr/local/etc/php/php.ini
 
 RUN curl https://get.symfony.com/cli/installer | bash
 
-RUN mv ~/.symfony/bin/symfony /usr/local/bin/symfony
+RUN mv ~/.symfony5/bin/symfony /usr/local/bin/symfony
 
 COPY enter /usr/local/bin/enter
 
